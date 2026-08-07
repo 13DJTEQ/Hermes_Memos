@@ -486,6 +486,35 @@ class MemoTestCase(unittest.TestCase):
         self.assertEqual(result["integrity"], "ok")
         self.assertTrue(Path(result["backup"]).exists())
 
+    def test_60a_backup_integrity_ok_without_wal_sidecars(self):
+        """A backup must verify even when its -wal/-shm sidecars are absent.
+
+        The database runs in WAL mode, so a freshly written backup is opened
+        while the live connection still holds the source database. Opening the
+        copy read-only without immutable=1 makes SQLite look for sidecar files
+        it cannot create, which surfaced as
+        'unable to open database file' and blocked every restore.
+        """
+        self.add("Backup without sidecars")
+        backup = Path(self.store.manual_backup()["backup"])
+        for suffix in ("-wal", "-shm"):
+            sidecar = backup.with_name(backup.name + suffix)
+            if sidecar.exists():
+                sidecar.unlink()
+        self.assertEqual(self.store._check_backup(backup), "ok")
+
+    def test_60b_backup_integrity_ok_on_read_only_directory(self):
+        """Integrity must not depend on write access to the backup directory."""
+        self.add("Backup in locked dir")
+        backup = Path(self.store.manual_backup()["backup"])
+        directory = backup.parent
+        original_mode = directory.stat().st_mode
+        os.chmod(directory, 0o500)
+        try:
+            self.assertEqual(self.store._check_backup(backup), "ok")
+        finally:
+            os.chmod(directory, original_mode)
+
     def test_61_restore_requires_exact_confirmation(self):
         backup = self.store.manual_backup()["backup"]
         with self.assertRaises(memo.MemoError):

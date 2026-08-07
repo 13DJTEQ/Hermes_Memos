@@ -989,7 +989,7 @@ class MemoStore:
     def _check_backup(path: Path) -> str:
         if not path.exists():
             return "missing"
-        uri = f"file:{urllib.parse.quote(str(path))}?mode=ro"
+        uri = f"file:{urllib.parse.quote(str(path))}?mode=ro&immutable=1"
         conn = sqlite3.connect(uri, uri=True)
         try:
             return str(conn.execute("PRAGMA integrity_check").fetchone()[0])
@@ -2624,7 +2624,7 @@ class MemoStore:
         integrity = self._check_backup(path)
         if integrity != "ok":
             raise MemoError(f"Backup integrity check failed: {integrity}")
-        candidate = sqlite3.connect(f"file:{urllib.parse.quote(str(path))}?mode=ro", uri=True)
+        candidate = sqlite3.connect(f"file:{urllib.parse.quote(str(path))}?mode=ro&immutable=1", uri=True)
         try:
             candidate_schema = int(candidate.execute("PRAGMA user_version").fetchone()[0])
         finally:

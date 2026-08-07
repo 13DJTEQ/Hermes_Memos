@@ -20,10 +20,33 @@ def replace_component(source: Path, destination: Path) -> None:
     shutil.copytree(source, destination)
 
 
+def detect_local_timezone() -> str:
+    """Best-effort IANA timezone for this machine, falling back to UTC."""
+    try:
+        key = __import__("tzlocal").get_localzone_name()
+        if key:
+            return key
+    except Exception:
+        pass
+    zoneinfo_link = Path("/etc/localtime")
+    if zoneinfo_link.is_symlink():
+        target = os.readlink(zoneinfo_link)
+        marker = "/zoneinfo/"
+        if marker in target:
+            return target.split(marker, 1)[1]
+    return os.environ.get("TZ") or "UTC"
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Install personal-memo Skill and Hermes plugin")
     parser.add_argument("--hermes-home", default=os.environ.get("HERMES_HOME", "~/.hermes"))
+    parser.add_argument(
+        "--timezone",
+        default=None,
+        help="IANA timezone for memo display (default: auto-detected from this machine)",
+    )
     args = parser.parse_args()
+    timezone = args.timezone or detect_local_timezone()
     package = Path(__file__).resolve().parent
     skill = package / "skill"
     plugin = package / "plugin"
@@ -41,7 +64,7 @@ def main() -> int:
     migration_env["PERSONAL_MEMO_SKILL_ROOT"] = str(home / "skills" / "productivity" / "personal-memo")
     try:
         migration = subprocess.run(
-            [sys.executable, str(home / "skills" / "productivity" / "personal-memo" / "scripts" / "memo.py"), "--json", "migrate-timezone", "Asia/Shanghai"],
+            [sys.executable, str(home / "skills" / "productivity" / "personal-memo" / "scripts" / "memo.py"), "--json", "migrate-timezone", timezone],
             check=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,

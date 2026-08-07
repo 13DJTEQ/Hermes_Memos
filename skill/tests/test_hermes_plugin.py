@@ -15,7 +15,50 @@ from types import SimpleNamespace
 
 
 ROOT = Path(__file__).resolve().parents[2]
-PLUGIN = ROOT / "plugin"
+
+
+def _resolve_plugin_dir() -> Path:
+    """Locate the plugin package in both repo and installed layouts."""
+    candidates = [
+        ROOT / "plugin",  # repository checkout
+        Path(
+            os.environ.get(
+                "HERMES_HOME", Path.home() / ".hermes"
+            )
+        ).expanduser()
+        / "plugins"
+        / "personal-memo",  # installed layout
+    ]
+    for candidate in candidates:
+        if (candidate / "__init__.py").is_file():
+            return candidate
+    raise unittest.SkipTest(
+        "personal-memo plugin package not found in repo or HERMES_HOME"
+    )
+
+
+PLUGIN = _resolve_plugin_dir()
+
+
+def _resolve_core_dir() -> Path:
+    """Locate the personal_memo_core package in repo and installed layouts."""
+    env_override = os.environ.get("PERSONAL_MEMO_CORE_PATH")
+    candidates = [
+        Path(env_override) / "personal_memo_core" if env_override else None,
+        ROOT / "core" / "personal_memo_core",  # repository checkout
+        Path(os.environ.get("HERMES_HOME", Path.home() / ".hermes")).expanduser()
+        / "lib"
+        / "personal_memo_core",  # installed layout
+    ]
+    for candidate in candidates:
+        if candidate is not None and candidate.is_dir():
+            return candidate
+    raise unittest.SkipTest(
+        "personal_memo_core package not found in repo or HERMES_HOME"
+    )
+
+
+CORE = _resolve_core_dir()
 PACKAGE = "personal_memo_plugin_test"
 SPEC = importlib.util.spec_from_file_location(
     PACKAGE, PLUGIN / "__init__.py", submodule_search_locations=[str(PLUGIN)]
@@ -54,7 +97,7 @@ class HermesPluginTestCase(unittest.TestCase):
         self.old_home = os.environ.get("HERMES_HOME")
         self.home = Path(self.temp.name)
         destination = self.home / "lib" / "personal_memo_core"
-        shutil.copytree(ROOT / "core" / "personal_memo_core", destination, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+        shutil.copytree(CORE, destination, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
         os.environ["HERMES_HOME"] = str(self.home)
         plugin.store.close_thread_store()
 
