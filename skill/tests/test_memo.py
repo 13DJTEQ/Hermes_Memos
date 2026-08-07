@@ -582,7 +582,7 @@ class MemoTestCase(unittest.TestCase):
         item = self.add("Due today", due_at=today)
         view = self.store.today(platform="telegram", user_id="u", chat_id="c")
         self.assertIn(item["id"], view["reasons"])
-        self.assertIn("今天截止", view["reasons"][item["id"]])
+        self.assertIn("Due today", view["reasons"][item["id"]])
 
     def test_73_activity_uses_actual_completion_timestamp(self):
         item = self.store.complete(self.add("Actually completed")["id"])

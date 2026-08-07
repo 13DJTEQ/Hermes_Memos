@@ -79,33 +79,33 @@ SENSITIVE_PATTERNS = (
 )
 URL_RE = re.compile(r"https?://[^\s<>\]\[(){}\"']+", re.I)
 
-MORNING_PROMPT = """加载 personal-memo skill，生成一份个性化的早间行动计划（Asia/Shanghai）。
+MORNING_PROMPT = """Load the personal-memo skill and produce a personalized morning action plan in the configured memo timezone.
 
-先读取可用的稳定上下文：SOUL.md、用户画像、长期记忆；再读取活动备忘录、链接来源摘要、最近完成记录和今天的时间。将这些材料仅用于贴合用户长期目标与工作方式，绝不虚构日程、精力、进展或事实。
+First read whatever stable context is available: SOUL.md, the user profile, and long-term memory. Then read the active memos, link-source summaries, recent completions, and today's date and time. Use this material only to fit the user's long-term goals and working style. Never invent schedules, energy levels, progress, or facts.
 
-调用 memo_reminder(mode="morning") 建立当前活动事项快照；必要时再查询最近完成记录。不要机械复述完整列表。输出“今日焦点”（最多 3 项）：每项必须给出为何此刻优先、可立即执行的最小下一步，以及合适的开始时段或截止风险。可以指出一项适合主动延后的事项。信息不足时明确标注为推测。
+Call memo_reminder(mode="morning") to create a snapshot of the current active items, and query recent completions if needed. Do not mechanically restate the full list. Output "Today's focus" with at most 3 items. For each one, give why it is a priority right now, the smallest next step that can be taken immediately, and either a suitable start window or the deadline risk. You may name one item that is a good candidate for deliberate deferral. Where evidence is thin, label the recommendation as an inference.
 
-若没有活动事项、近期截止风险或真正有价值的建议，最终只回复 [SILENT]；否则用简洁中文输出计划。
+If there are no active items, no near-term deadline risk, and no genuinely useful suggestion, reply with exactly [SILENT] and nothing else. Otherwise output the plan concisely.
 
-只允许读取、排序、生成提醒和更新本次列表编号快照。不得完成、删除、归档、改期、修改优先级或改变任何条目的业务状态。"""
+You may only read, sort, generate reminders, and update this run's numbered-list snapshot. You must not complete, delete, archive, reschedule, change priority, or otherwise alter the business state of any item."""
 
-EVENING_PROMPT = """加载 personal-memo skill，生成一份个性化的晚间收尾与明日准备计划（Asia/Shanghai）。
+EVENING_PROMPT = """Load the personal-memo skill and produce a personalized evening wrap-up and tomorrow-preparation plan in the configured memo timezone.
 
-先读取可用的稳定上下文：SOUL.md、用户画像、长期记忆；再读取活动备忘录、链接来源摘要、最近完成记录、明天的临近截止事项和当前时段。将这些材料仅用于贴合用户长期目标与工作方式，绝不虚构日程、精力、进展或事实。
+First read whatever stable context is available: SOUL.md, the user profile, and long-term memory. Then read the active memos, link-source summaries, recent completions, tomorrow's approaching deadlines, and the current time of day. Use this material only to fit the user's long-term goals and working style. Never invent schedules, energy levels, progress, or facts.
 
-调用 memo_reminder(mode="evening") 建立当前活动事项快照；必要时再查询最近完成记录。输出“今晚收尾”（至多 2 项低摩擦、适合当前时段的最小行动）和“明日准备”（至多 2 项）。说明为何建议现在做或留到明天；对临近截止或长期搁置但与用户目标高度相关的事项给出温和提示。不要机械复述完整列表，信息不足时明确标注为推测。
+Call memo_reminder(mode="evening") to create a snapshot of the current active items, and query recent completions if needed. Output "Tonight's wrap-up" with at most 2 low-friction actions suited to this time of day, and "Prep for tomorrow" with at most 2 items. Explain why each is better done now or left until tomorrow. Give a gentle nudge on anything with a near deadline, or long-stalled work that is highly relevant to the user's goals. Do not mechanically restate the full list, and label thin evidence as an inference.
 
-若没有活动事项、临近截止风险或真正有价值的建议，最终只回复 [SILENT]；否则用简洁中文输出计划。
+If there are no active items, no near-term deadline risk, and no genuinely useful suggestion, reply with exactly [SILENT] and nothing else. Otherwise output the plan concisely.
 
-只允许读取、排序、生成提醒和更新本次列表编号快照。不得完成、删除、归档、改期、修改优先级或改变任何条目的业务状态。"""
+You may only read, sort, generate reminders, and update this run's numbered-list snapshot. You must not complete, delete, archive, reschedule, change priority, or otherwise alter the business state of any item."""
 
-DISPATCH_PROMPT = """加载 personal-memo skill，从持久化数据库分发已经到期的精确时间提醒。
+DISPATCH_PROMPT = """Load the personal-memo skill and dispatch exact-time reminders that are now due, reading from the persistent database.
 
-先调用 dispatch-reminders，并只处理返回的到期条目。成功或失败后，用返回的 run_id 记录真实投递结果。
+Call dispatch-reminders first and handle only the due entries it returns. After each success or failure, record the real delivery outcome using the run_id it returned.
 
-只允许读取、生成提醒、记录投递结果和更新本次列表编号快照。
+You may only read, generate reminders, record delivery results, and update this run's numbered-list snapshot.
 
-不得完成、删除、归档、改期、修改优先级或改变任何条目的业务状态。"""
+You must not complete, delete, archive, reschedule, change priority, or otherwise alter the business state of any item."""
 
 CRON_DEFINITIONS = (
     ("personal-memo-reminder-dispatch", "*/5 * * * *", DISPATCH_PROMPT),
@@ -1392,8 +1392,8 @@ class MemoStore:
         urls = extract_urls(text)
         remaining = URL_RE.sub("", text).strip(" \t\r\n,，。")
         pure_urls = bool(urls) and not remaining
-        explicit = explicit or bool(re.search(r"(?:备忘|记一下|记住|保存|存一下|待办|提醒我)", text, re.I))
-        future_intent = bool(re.search(r"(?:以后|有空|回头|明天|下周|月底|需要|要做|研究|看看|处理)", text, re.I))
+        explicit = explicit or bool(re.search(r"(?:备忘|记一下|记住|保存|存一下|待办|提醒我|remember|remind me|note to self|save this|add (?:a )?(?:task|todo|memo))", text, re.I))
+        future_intent = bool(re.search(r"(?:以后|有空|回头|明天|下周|月底|需要|要做|研究|看看|处理|later|sometime|tomorrow|next week|end of month|need to|have to|look into|check out|deal with)", text, re.I))
         mode = self.get_setting("capture_mode") or "conservative"
         if pure_urls and chat_type != "private" and not explicit:
             return {"saved": False, "status": "not_captured", "reason": "group_url_requires_confirmation"}
@@ -1469,10 +1469,10 @@ class MemoStore:
         if kind == "video":
             if title and description:
                 basis, status = "title_and_description", "complete"
-                summary = f"根据视频标题和简介，该视频大概与“{truncate(title, 100)}”有关。{truncate(description, 180)}"
+                summary = f"Based on the video title and description, this video is likely about '{truncate(title, 100)}'. {truncate(description, 180)}"
             elif title:
                 basis, status = "title_only", "partial"
-                summary = f"仅根据视频标题判断，该视频大概与“{truncate(title, 120)}”有关；信息可能不完整。"
+                summary = f"Based on the video title alone, this video is likely about '{truncate(title, 120)}'; information may be incomplete."
             else:
                 basis, status, summary = "metadata_only", "partial", None
         else:
@@ -1619,7 +1619,7 @@ class MemoStore:
             # agent-generated title/summary and original content.
             result = self._row_item(item_id)
         result["refreshed"] = True
-        result["refresh_note"] = "链接元数据已重新解析；纯文本摘要保留原有 agent 推断"
+        result["refresh_note"] = "Link metadata re-parsed; the plain-text summary keeps the original agent inference"
         return result
 
     def refresh_all(self, **scope: Any) -> dict[str, Any]:
@@ -2070,19 +2070,19 @@ class MemoStore:
         for item in active:
             item_reasons: list[str] = []
             if item.get("is_overdue"):
-                item_reasons.append("逾期未完成")
+                item_reasons.append("Overdue")
             if item.get("due_at"):
                 due_date = parse_datetime(str(item["due_at"]), str(item["timezone"])).astimezone(
                     check_timezone(timezone)
                 ).date()
                 if due_date == today:
-                    item_reasons.append("今天截止")
+                    item_reasons.append("Due today")
             if item.get("scheduled_for"):
                 scheduled_date = parse_datetime(str(item["scheduled_for"]), str(item["timezone"])).astimezone(
                     check_timezone(timezone)
                 ).date()
                 if scheduled_date == today:
-                    item_reasons.append("今天计划处理")
+                    item_reasons.append("Scheduled for today")
             if item_reasons:
                 selected.append(item)
                 reasons[item["id"]] = item_reasons
@@ -2092,7 +2092,7 @@ class MemoStore:
             item = next(candidate for candidate in no_due if candidate["id"] == suggestion["id"])
             if item["id"] not in reasons:
                 selected.append(item)
-                reasons[item["id"]] = ["建议今天推进，并非今天到期", suggestion["reason"]]
+                reasons[item["id"]] = ["Suggested for today (not due today)", suggestion["reason"]]
         selected.sort(key=self._item_sort_key)
         snapshot_id = self.create_snapshot(
             selected,
@@ -2306,22 +2306,22 @@ class MemoStore:
                 due_local = due.astimezone(now.tzinfo) if due.tzinfo else due
                 if due_local < now:
                     score += 100
-                    reasons.append("已逾期")
+                    reasons.append("Overdue")
                 elif due_local <= horizon:
                     score += 80
-                    reasons.append("未来 12 小时内截止")
+                    reasons.append("Due within 12 hours")
             if item.get("scheduled_for"):
                 scheduled = parse_datetime(str(item["scheduled_for"]), str(item["timezone"]))
                 scheduled_local = scheduled.astimezone(now.tzinfo) if scheduled.tzinfo else scheduled
                 if now <= scheduled_local <= horizon:
                     score += 60
-                    reasons.append("已计划在未来 12 小时处理")
+                    reasons.append("Scheduled within 12 hours")
             if item["priority_level"] in {"urgent", "high"}:
-                reasons.append("优先级较高")
+                reasons.append("High priority")
             if not reasons and item.get("suggested_action"):
-                reasons.append("有明确后续动作")
+                reasons.append("Has a clear next action")
             if score >= 25 or reasons:
-                candidates.append((score, item, "，".join(reasons) or "值得推进"))
+                candidates.append((score, item, "，".join(reasons) or "Worth advancing"))
         candidates.sort(key=lambda value: (-value[0], self._item_sort_key(value[1])))
         return [
             {"id": item["id"], "title": item["title"], "reason": reason, "score": score}
@@ -2538,7 +2538,7 @@ class MemoStore:
     def _display_time(item: dict[str, Any], field: str) -> str:
         value = item.get(field)
         if not value:
-            return "无"
+            return "None"
         precision_field = {
             "due_at": "due_precision",
             "remind_at": "remind_precision",
@@ -2546,14 +2546,14 @@ class MemoStore:
             "defer_until": "defer_precision",
         }.get(field)
         if precision_field and item.get(precision_field) == "date":
-            return f"{value}，未指定具体时间"
+            return f"{value}, no specific time"
         if item.get("time_uncertain") and field in {"due_at", "scheduled_for", "remind_at"}:
-            return f"{value}（时间待确认）"
+            return f"{value} (time to be confirmed)"
         return str(value)
 
     @staticmethod
     def _priority_label(value: str) -> str:
-        return {"urgent": "紧急", "high": "高", "normal": "普通", "low": "低"}.get(value, value)
+        return {"urgent": "Urgent", "high": "High", "normal": "Normal", "low": "Low"}.get(value, value)
 
     def export_markdown(self) -> dict[str, Any]:
         current = self.list_items(create_snapshot=False)["items"]
@@ -2611,7 +2611,7 @@ class MemoStore:
                     [
                         f"- Source: {source['original_url']}",
                         f"  - Ingest: {source['ingest_status']}",
-                        f"  - Suggested action: {source.get('suggested_action') or '之后打开该链接，确认是否值得进一步处理。'}",
+                        f"  - Suggested action: {source.get('suggested_action') or 'Open this link later and decide whether it is worth pursuing.'}",
                     ]
                 )
             lines.append("")
@@ -3316,38 +3316,38 @@ def _updates_from_args(args: argparse.Namespace) -> dict[str, Any]:
 
 def _render_item(item: dict[str, Any], number: int | None = None) -> str:
     prefix = f"#{number} · " if number is not None else ""
-    lines = [f"{prefix}{item['id']} · {item['title']}", f"类型：{item['item_type']} · 状态：{item['status']}"]
+    lines = [f"{prefix}{item['id']} · {item['title']}", f"Type: {item['item_type']} · Status: {item['status']}"]
     for source in item.get("sources", []):
         if source.get("summary"):
-            label = "主题概括" if source.get("source_type") == "video" else "摘要"
-            lines.append(f"{label}：{source['summary']}")
+            label = "Topic summary" if source.get("source_type") == "video" else "Summary"
+            lines.append(f"{label}: {source['summary']}")
         if source.get("suggested_action"):
-            action_label = "用户要求" if source.get("action_source") == "user" else "建议动作"
-            lines.append(f"{action_label}：{source['suggested_action']}")
+            action_label = "User request" if source.get("action_source") == "user" else "Suggested action"
+            lines.append(f"{action_label}: {source['suggested_action']}")
         if source.get("source_type") == "video":
             basis_label = {
-                "title_and_description": "视频标题和简介",
-                "title_only": "仅视频标题，内容概括可能不完整",
-                "metadata_only": "基础页面元数据",
-                "user_context": "用户附带的说明",
-                "mixed_metadata_and_user_context": "页面元数据和用户说明",
-                "unavailable": "未取得页面信息",
+                "title_and_description": "Video title and description",
+                "title_only": "Video title only; summary may be incomplete",
+                "metadata_only": "Basic page metadata",
+                "user_context": "User-provided note",
+                "mixed_metadata_and_user_context": "Page metadata and user note",
+                "unavailable": "No page information retrieved",
             }.get(source.get("understanding_basis"), source.get("understanding_basis"))
-            lines.append(f"理解依据：{basis_label}")
-        lines.append(f"链接解析：{source.get('ingest_status')} · {source.get('original_url')}")
+            lines.append(f"Basis: {basis_label}")
+        lines.append(f"Link parse: {source.get('ingest_status')} · {source.get('original_url')}")
     due = MemoStore._display_time(item, "due_at")
-    overdue = " · 已逾期" if item.get("is_overdue") else ""
-    pending = " · 时间待确认" if item.get("time_pending_confirmation") else ""
-    lines.append(f"截止时间：{due}{overdue}{pending} · 优先级：{MemoStore._priority_label(item['priority_level'])}")
+    overdue = " · overdue" if item.get("is_overdue") else ""
+    pending = " · time to be confirmed" if item.get("time_pending_confirmation") else ""
+    lines.append(f"Due: {due}{overdue}{pending} · Priority: {MemoStore._priority_label(item['priority_level'])}")
     if item.get("scheduled_for"):
-        lines.append(f"计划时间：{MemoStore._display_time(item, 'scheduled_for')}")
+        lines.append(f"Scheduled: {MemoStore._display_time(item, 'scheduled_for')}")
     if item.get("remind_at"):
-        lines.append(f"提醒时间：{MemoStore._display_time(item, 'remind_at')}")
+        lines.append(f"Reminder: {MemoStore._display_time(item, 'remind_at')}")
     for reminder in item.get("reminders", []):
         if reminder.get("remind_at"):
             offset = reminder.get("offset_hours")
-            label = f"提前{offset}小时提醒" if offset else "提醒"
-            lines.append(f"{label}：{reminder['remind_at']}")
+            label = f"Reminder {offset}h before" if offset else "Reminder"
+            lines.append(f"{label}: {reminder['remind_at']}")
     return "\n".join(lines)
 
 
@@ -3355,24 +3355,24 @@ def render_human(result: Any, command: str) -> str:
     if command in {"list", "search", "today", "activity"} and isinstance(result, dict):
         items = result.get("items", [])
         if not items:
-            return "没有匹配的事项。"
+            return "No matching items."
         return "\n\n".join(_render_item(item, index) for index, item in enumerate(items, start=1))
     if command == "reminder" and isinstance(result, dict):
-        blocks = ["所有未完成事项", ""]
+        blocks = ["All open items", ""]
         items = result.get("items", [])
-        blocks.append("\n\n".join(_render_item(item, index) for index, item in enumerate(items, start=1)) or "没有未完成事项。")
-        blocks.extend(["", "未来 12 小时建议", ""])
+        blocks.append("\n\n".join(_render_item(item, index) for index, item in enumerate(items, start=1)) or "No open items.")
+        blocks.extend(["", "Next 12 hours", ""])
         suggestions = result.get("suggestions", [])
-        blocks.append("\n".join(f"{index}. {item['title']}——{item['reason']}。" for index, item in enumerate(suggestions, start=1)) or "暂无需要特别推进的事项。")
+        blocks.append("\n".join(f"{index}. {item['title']}——{item['reason']}。" for index, item in enumerate(suggestions, start=1)) or "Nothing needs pushing right now.")
         return "\n".join(blocks)
     if command == "history" and isinstance(result, dict):
         return "\n".join(
             f"{event['created_at']} · {event['operation']} · {event['stable_item_id']} · {event['event_id']}"
             for event in result.get("events", [])
-        ) or "没有历史记录。"
+        ) or "No history."
     if command == "doctor" and isinstance(result, dict):
-        status = "通过" if result.get("ok") else "发现问题"
-        lines = [f"Doctor：{status}", f"HERMES_HOME：{result.get('hermes_home')}", f"数据库：{result.get('database')}"]
+        status = "Pass" if result.get("ok") else "Problems found"
+        lines = [f"Doctor: {status}", f"HERMES_HOME: {result.get('hermes_home')}", f"Database: {result.get('database')}"]
         lines.extend(f"- {problem}" for problem in result.get("problems", []))
         return "\n".join(lines)
     if isinstance(result, dict) and "id" in result and "title" in result:
@@ -3386,27 +3386,27 @@ def _table_cell(value: Any, *, limit: int = 72) -> str:
     return text.replace("|", "\\|")
 
 
-def render_markdown_table(items: Sequence[dict[str, Any]], *, heading: str = "当前备忘录") -> str:
+def render_markdown_table(items: Sequence[dict[str, Any]], *, heading: str = "Current memos") -> str:
     """Render a stable, user-facing Markdown table for any item list."""
     if not items:
-        return "没有匹配的事项。"
+        return "No matching items."
     type_labels = {
-        "task": "待办", "note": "笔记", "link": "链接", "article": "文章",
-        "video": "视频", "reference": "参考资料",
+        "task": "Task", "note": "Note", "link": "Link", "article": "Article",
+        "video": "Video", "reference": "Reference",
     }
-    status_labels = {"active": "未完成", "completed": "已完成", "deleted": "已删除", "archived": "已归档"}
-    priority_labels = {"urgent": "紧急", "high": "高", "normal": "普通", "low": "低"}
-    source_labels = {"processing": "解析中", "complete": "已解析", "partial": "部分解析", "failed": "解析失败"}
+    status_labels = {"active": "Open", "completed": "Completed", "deleted": "Deleted", "archived": "Archived"}
+    priority_labels = {"urgent": "Urgent", "high": "High", "normal": "Normal", "low": "Low"}
+    source_labels = {"processing": "Parsing", "complete": "Parsed", "partial": "Partially parsed", "failed": "Parse failed"}
     lines = [
-        f"**{heading}（{len(items)} 项）**",
+        f"**{heading} ({len(items)} items)**",
         "",
-        "| # | 总结 | 类型 | 截止时间 | 优先级 | 状态 | 内容 |",
+        "| # | Summary | Type | Due | Priority | Status | Content |",
         "| ---: | --- | --- | --- | --- | --- | --- |",
     ]
     for index, item in enumerate(items, start=1):
         time_value = MemoStore._display_time(item, "due_at") if item.get("due_at") else "—"
         if item.get("due_at") and item.get("is_overdue"):
-            time_value += "（已逾期）"
+            time_value += " (overdue)"
         status = status_labels.get(str(item.get("status")), str(item.get("status") or "—"))
         sources = item.get("sources") or []
         if sources:
@@ -3430,24 +3430,24 @@ def render_markdown_table(items: Sequence[dict[str, Any]], *, heading: str = "�
     return "\n".join(lines)
 
 
-def render_markdown_list(items: Sequence[dict[str, Any]], *, heading: str = "当前备忘录") -> str:
+def render_markdown_list(items: Sequence[dict[str, Any]], *, heading: str = "Current memos") -> str:
     """Render a compact, readable list for direct chat slash commands."""
     if not items:
-        return "没有匹配的事项。"
-    type_labels = {"task": "待办", "note": "笔记", "link": "链接", "article": "文章", "video": "视频", "reference": "参考资料"}
-    priority_labels = {"urgent": "紧急", "high": "高", "normal": "普通", "low": "低"}
-    lines = [f"**{heading}（{len(items)} 项）**", ""]
+        return "No matching items."
+    type_labels = {"task": "Task", "note": "Note", "link": "Link", "article": "Article", "video": "Video", "reference": "Reference"}
+    priority_labels = {"urgent": "Urgent", "high": "High", "normal": "Normal", "low": "Low"}
+    lines = [f"**{heading} ({len(items)} items)**", ""]
     for index, item in enumerate(items, start=1):
         summary = item.get("title") or "—"
         due = MemoStore._display_time(item, "due_at") if item.get("due_at") else "—"
         if item.get("due_at") and item.get("is_overdue"):
-            due += "（已逾期）"
+            due += " (overdue)"
         lines.extend([
             f"**{index}. {summary}**",
-            f"- 类型：{type_labels.get(str(item.get('item_type')), str(item.get('item_type') or '—'))}",
-            f"- 截止时间：{due}",
-            f"- 优先级：{priority_labels.get(str(item.get('priority_level')), str(item.get('priority_level') or '—'))}",
-            f"- 内容：{item.get('content') or '—'}",
+            f"- Type: {type_labels.get(str(item.get('item_type')), str(item.get('item_type') or '—'))}",
+            f"- Due: {due}",
+            f"- Priority: {priority_labels.get(str(item.get('priority_level')), str(item.get('priority_level') or '—'))}",
+            f"- Content: {item.get('content') or '—'}",
             "",
         ])
     return "\n".join(lines).rstrip()

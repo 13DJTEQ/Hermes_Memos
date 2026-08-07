@@ -137,7 +137,7 @@ class HermesPluginTestCase(unittest.TestCase):
         listed = self.invoke(plugin.tools.memo_list, {"platform": "telegram", "user_id": "u1", "chat_id": "c1"})
         self.assertTrue(listed["ok"], listed)
         self.assertEqual(listed["result"]["count"], 1)
-        self.assertIn("| # | 总结 | 类型 | 截止时间 | 优先级 | 状态 | 内容 |", listed["result"]["display_markdown"])
+        self.assertIn("| # | Summary | Type | Due | Priority | Status | Content |", listed["result"]["display_markdown"])
         completed = self.invoke(plugin.tools.memo_transition, {
             "action": "complete", "reference": item_id, "platform": "telegram", "user_id": "u1", "chat_id": "c1",
         })
@@ -164,7 +164,7 @@ class HermesPluginTestCase(unittest.TestCase):
         plugin.register(context)
         table = context.commands["memos"]("")
         self.assertIn("**1. Table item**", table)
-        self.assertIn("- 内容：Table item", table)
+        self.assertIn("- Content: Table item", table)
         self.assertNotIn("| # |", table)
         self.assertIn("Table item", table)
 
