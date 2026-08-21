@@ -1,0 +1,19 @@
+# CI caller for Hermes_Memos (Python 3.10+, zero third-party deps for core).
+# Triggers on master (this repo's default branch).
+# Adapted from ci-cd-template: dropped pip install (no requirements.txt),
+# added python -m compileall as a zero-dependency build gate, tests the skill/tests suite.
+name: CI (Python)
+on:
+  pull_request:
+    branches: [master]
+  push:
+    branches: [master]
+jobs:
+  call-ci:
+    uses: ./.github/workflows/ci-reusable.yml
+    with:
+      stack: python
+      python-version: "3.10"
+      lint-command: "python -m py_compile $(find . -name '*.py')"
+      build-command: "python -m compileall -q ."
+      test-command: "python -m unittest discover -s skill/tests -v"
