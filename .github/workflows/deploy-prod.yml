@@ -12,4 +12,5 @@ jobs:
     uses: ./.github/workflows/deploy-reusable.yml
     with:
       environment: prod
+      working-directory: "."
       deploy-command: "./scripts/deploy.sh prod ${{ github.ref_name }}"

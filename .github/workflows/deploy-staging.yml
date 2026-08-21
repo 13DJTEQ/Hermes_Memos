@@ -9,4 +9,5 @@ jobs:
     uses: ./.github/workflows/deploy-reusable.yml
     with:
       environment: staging
+      working-directory: "."
       deploy-command: "./scripts/deploy.sh staging ${{ github.ref_name }}"
