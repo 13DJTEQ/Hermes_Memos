@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "personal-memo-core"
+version = "0.1.0"
+description = "Local-first personal memo + task store (Hermes plugin backend)"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "pydantic",
+    "httpx",
+]
+
+[tool.setuptools.packages.find]
+where = ["core"]
+
+[tool.pytest.ini_options]
+testpaths = ["skill/tests"]

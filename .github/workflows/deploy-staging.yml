@@ -1,0 +1,12 @@
+# Deploy to staging — fires ONLY on a version tag (v*).
+# The tag is produced by release-please.yml, so deploys are always versioned.
+name: Deploy to Staging
+on:
+  push:
+    tags: ["v*"]
+jobs:
+  call-deploy:
+    uses: ./.github/workflows/deploy-reusable.yml
+    with:
+      environment: staging
+      deploy-command: "./scripts/deploy.sh staging ${{ github.ref_name }}"

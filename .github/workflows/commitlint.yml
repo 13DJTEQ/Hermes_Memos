@@ -1,0 +1,14 @@
+# Enforce Conventional Commits so release-please can version automatically.
+# Fails the PR if any commit message is non-conforming.
+name: Commitlint
+on:
+  pull_request:
+    branches: [master]
+jobs:
+  commitlint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: wagoid/commitlint-github-action@v6

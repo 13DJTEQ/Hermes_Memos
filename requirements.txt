@@ -1,0 +1,7 @@
+# Runtime dependencies for the personal-memo-core package / Hermes plugin backend.
+# Installs the local package in editable mode so `personal_memo_core` is importable in tests.
+-e .
+fastapi
+uvicorn
+pydantic
+httpx

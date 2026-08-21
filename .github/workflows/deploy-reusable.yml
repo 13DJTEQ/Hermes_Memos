@@ -1,0 +1,34 @@
+# Reusable deploy — same artifact promoted through environments.
+# Triggered by deploy-staging.yml on tag push. Add more callers for prod.
+name: Deploy Reusable
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+      deploy-command:
+        required: true
+        type: string
+      working-directory:
+        required: false
+        type: string
+        default: "."
+    secrets:
+      DEPLOY_TOKEN:
+        required: false
+jobs:
+  deploy:
+    environment:
+      name: ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy (${{ inputs.environment }})
+        env:
+          DEPLOY_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: ${{ inputs.deploy-command }}

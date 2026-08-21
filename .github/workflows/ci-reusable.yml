@@ -1,0 +1,110 @@
+# Reusable CI — one source of truth for every project.
+# Callers (ci-node.yml, ci-python.yml, ci-go.yml, ci-ios.yml) set the stack + commands.
+# The deploy path is separate (deploy-staging.yml); CI never deploys.
+name: CI Reusable
+on:
+  workflow_call:
+    inputs:
+      stack:
+        description: "node | python | go | ios | generic"
+        required: true
+        type: string
+      working-directory:
+        description: "Subdirectory holding the project (default repo root)"
+        required: false
+        type: string
+        default: "."
+      node-version:
+        required: false
+        type: string
+        default: "20"
+      python-version:
+        required: false
+        type: string
+        default: "3.12"
+      go-version:
+        required: false
+        type: string
+        default: "1.22"
+      xcode-version:
+        required: false
+        type: string
+        default: ""
+      lint-command:
+        required: false
+        type: string
+        default: ""
+      build-command:
+        required: false
+        type: string
+        default: ""
+      test-command:
+        required: false
+        type: string
+        default: ""
+    secrets:
+      CODECOV_TOKEN:
+        required: false
+
+jobs:
+  ci:
+    # iOS must run on macOS runners; everything else on Linux.
+    runs-on: ${{ inputs.stack == 'ios' && 'macos-latest' || 'ubuntu-latest' }}
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        if: inputs.stack == 'ios' && inputs.xcode-version != ''
+        run: sudo xcode-select -s /Applications/Xcode_${{ inputs.xcode-version }}.app
+
+      - name: Node setup
+        if: inputs.stack == 'node'
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node-version }}
+          cache: npm
+          cache-dependency-path: ${{ inputs.working-directory }}/package-lock.json
+
+      - name: Python setup
+        if: inputs.stack == 'python'
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ inputs.python-version }}
+          cache: pip
+
+      - name: Go setup
+        if: inputs.stack == 'go'
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ inputs.go-version }}
+
+      - name: Install (node)
+        if: inputs.stack == 'node'
+        run: npm ci
+
+      - name: Install (python)
+        if: inputs.stack == 'python'
+        run: pip install -r requirements.txt && pip install pytest build
+
+      - name: Install (go)
+        if: inputs.stack == 'go'
+        run: go mod download
+
+      - name: Install (ios)
+        if: inputs.stack == 'ios'
+        run: bundle install || true
+
+      - name: Lint
+        if: inputs.lint-command != ''
+        run: ${{ inputs.lint-command }}
+
+      - name: Build
+        if: inputs.build-command != ''
+        run: ${{ inputs.build-command }}
+
+      - name: Test
+        if: inputs.test-command != ''
+        run: ${{ inputs.test-command }}

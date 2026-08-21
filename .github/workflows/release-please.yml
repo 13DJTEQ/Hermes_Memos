@@ -1,0 +1,18 @@
+# Automatic versioning. Reads Conventional Commits, maintains CHANGELOG,
+# opens a "Release PR", and on merge cuts the tag + GitHub Release.
+# No manual version bumps. Configure per project via release-please-config.json.
+name: Release Please
+on:
+  push:
+    branches: [master]
+permissions:
+  contents: write
+  pull-requests: write
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: googleapis/release-please-action@v4
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
