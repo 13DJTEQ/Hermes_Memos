@@ -1,0 +1,20 @@
+# Automatic versioning + changelog. Uses the "simple" strategy: tracks commits,
+# maintains CHANGELOG.md, cuts the vX.Y.Z tag + GitHub Release on merge to master.
+# NOTE: this repo's canonical version lives in plugin/plugin.yaml, not pyproject.toml.
+# release-please manages the tag + changelog; propagate the new version into
+# plugin/plugin.yaml manually (or add a post-release step) — see README.
+name: Release Please
+on:
+  push:
+    branches: [master]
+permissions:
+  contents: write
+  pull-requests: write
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: googleapis/release-please-action@v4
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json

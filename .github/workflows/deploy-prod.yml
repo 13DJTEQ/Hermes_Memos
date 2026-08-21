@@ -1,0 +1,15 @@
+# Prod deploy — fires on a version tag (v*), gated by the `prod` environment's
+# required reviewer (manual approval). Same shared impl as staging.
+name: Deploy to Production
+on:
+  push:
+    tags: [v*]
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+jobs:
+  call-deploy:
+    uses: ./.github/workflows/deploy-reusable.yml
+    with:
+      environment: prod
+      deploy-command: "./scripts/deploy.sh prod ${{ github.ref_name }}"

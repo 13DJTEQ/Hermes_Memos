@@ -1,0 +1,12 @@
+# Staging deploy — fires ONLY on a version tag (v*). Reused for master-based releases.
+# The deploy body (scripts/deploy.sh) is a placeholder until a deploy target exists.
+name: Deploy to Staging
+on:
+  push:
+    tags: ["v*"]
+jobs:
+  call-deploy:
+    uses: ./.github/workflows/deploy-reusable.yml
+    with:
+      environment: staging
+      deploy-command: "./scripts/deploy.sh staging ${{ github.ref_name }}"
